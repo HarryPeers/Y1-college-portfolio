@@ -1,0 +1,191 @@
+<html>
+    <head>
+        <title>Diary entry</title>
+    </head>
+
+    <style>
+
+        @font-face {
+            font-family: 'Gilroy';
+            font-style: light;
+            font-weight: normal;
+            src: url("/font/light.otf") format("opentype");
+        }
+
+        @font-face {
+            font-family: 'GilroyBold';
+            font-style: bold;
+            font-weight: normal;
+            src: url("/font/bold.otf") format("opentype");
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            padding: 0;
+            margin: 0;
+            background-color: #181731;
+            overflow:hidden;
+        }
+
+        .entries {
+            margin: auto;
+            margin-top: 30px;
+            width: 50%;
+            height: 60%;
+            padding: 100px 0 100px 0;
+            overflow: scroll;
+        }
+
+        .entries::-webkit-scrollbar {
+            display: none;
+        }
+
+        .entry {
+            background-color: #1f1e3e;
+            border: 1px solid #3BA55C;
+            border-radius: 22px;
+            width: 100%;
+            padding: 30px;
+            color: white;
+            font-family: 'Gilroy';
+            margin-bottom: 30px;
+        }
+
+        .entry h {
+            font-size: 48px;
+            font-weight: 999;
+            font-family: 'GilroyBold';
+        }
+
+
+        .comment {
+            border-top: 3px solid white;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .timestamp {
+            color: grey;
+            text-align: right;
+            font-size: 11px;
+            margin-top: 10px;
+        }
+
+        input, textarea {
+            border-radius: 12px;
+            padding: 3px 8px 3px 8px;
+            background-color: #181731;
+            border: none;
+            color: #3BA55C;
+            width: 80%;
+        }
+
+        button {
+            padding: 6px 9px 6px 9px;
+            background-color: #181731;
+            border: none;
+            border-radius: 12px;
+            color: #3BA55C;
+            margin-left: 20px;
+        }
+
+        .create {
+            height: 40%;
+            width: 30%;
+            position: fixed;
+            left: 35%;
+            bottom: 40px;
+            overflow: hidden;
+        }
+
+        .create-inner {
+            margin-bottom: 10px !important;
+        }
+
+    </style>
+    
+    <body>
+        <div class="entries" id="entries"></div>
+        <div class="entries create">
+            <div class="entry create-inner">
+                <input placeholder="Title" style="width:100%;"/><br>
+                <div class="comment">
+                    <textarea style="height:90px; width:100%;"></textarea><br>
+                </div>
+                <br>
+                <button style="margin-left: 0px;">Create</button>
+            </div>
+        </div>
+    </body>
+
+    <script>
+
+        function addPost(name, post) {
+
+            entries.innerHTML = `
+            <div class="entry" id="${name.replaceAll(" ", "-")}">
+                <h>${name}</h><br>
+                ${post.description}
+                <div class="timestamp">${post.time}</div>
+                <div class="comments" id="${name.replaceAll(' ', '-')}-comments">
+                </div>
+
+            </div>
+            ` + entries.innerHTML
+
+            post.comments.forEach((comment) => {
+                addComment(name, comment);
+            });
+
+            document.getElementById(name.replaceAll(" ", "-")).innerHTML += `<div class="comment"><input placeholder="Reply" id="${name.replaceAll(' ', '-')}-reply"/><button onclick='submit_comment("${name}")'>Reply</button></div>`
+        }
+
+        function addComment(postName, comment) {
+            let element = document.getElementById(postName.replaceAll(" ", "-"));
+
+            element.innerHTML += `
+                <div class="comment">
+                    ${comment.content}
+                    <div class="timestamp">${comment.time}<div>
+                </div>
+            `
+        }
+
+        function submit_comment(postName) {
+            
+            let content = document.getElementById(`${postName.replaceAll(' ', '-')}-reply`).value;
+            
+            var request = new XMLHttpRequest()
+            request.open("POST", "http://localhost:80/entries/comment", false)
+            request.send(JSON.stringify({"postname": postName, "content": content}))
+
+        }
+
+
+
+
+        window.onload = function() {
+            const entries = document.getElementById("entries");
+
+            var request = new XMLHttpRequest()
+            request.open("GET", "http://localhost:80/entries", false)
+            request.send()
+
+            var posts = JSON.parse(request.responseText);
+
+
+            Object.keys(posts).forEach((post)=> {
+                addPost(post, posts[post]);
+            });
+
+        }
+
+        
+
+
+    </script>
+
+</html>
